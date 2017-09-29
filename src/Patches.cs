@@ -1,58 +1,100 @@
 ﻿using Harmony;
-using System.Reflection;
 using UnityEngine;
 
 namespace BetterPlacing
 {
-    internal class PlacingRotation
-    {
-        private static Quaternion rotation;
-
-        private static PlayerManager playerManager;
-        private static FieldInfo fieldInfo;
-
-        internal static void InitializeRotation(PlayerManager playerManager)
-        {
-            PlacingRotation.playerManager = playerManager;
-            fieldInfo = AccessTools.Field(playerManager.GetType(), "m_RotationInCameraSpace");
-
-            rotation = (Quaternion)fieldInfo.GetValue(playerManager);
-        }
-
-        internal static void Rotate(float xAngle, float yAngle, float zAngle)
-        {
-            rotation *= Quaternion.Euler(xAngle, yAngle, zAngle);
-
-            fieldInfo.SetValue(playerManager, rotation);
-        }
-    }
-
     [HarmonyPatch(typeof(PlayerManager), "DoPositionCheck")]
     class PlayerManager_DoPositionCheck
     {
-        public static void Postfix(PlayerManager __instance)
+        static void Postfix(PlayerManager __instance, ref MeshLocationCategory __result)
         {
-            if (Input.mouseScrollDelta.y == 0)
+            GameObject gameObject = __instance.GetObjectToPlace();
+            Debug.Log("DoPositionCheck: objectToPlace.layer = " + gameObject.layer);
+
+            if (__result != MeshLocationCategory.Valid && Input.GetKey(KeyCode.L))
             {
-                return;
+                Placing.RestoreLastValidTransform(gameObject);
+                __result = MeshLocationCategory.Valid;
             }
 
-            float yAngle = Input.mouseScrollDelta.y;
-            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+            if (__result == MeshLocationCategory.Valid)
             {
-                yAngle *= 5;
+                Placing.StoreValidTransform(gameObject);
+
+                if (Input.GetKey(KeyCode.P))
+                {
+                    Placing.SnapToPositionBelow(gameObject);
+                }
             }
 
-            PlacingRotation.Rotate(0, yAngle, 0);
+            if (Input.GetKey(KeyCode.R))
+            {
+                Placing.SnapToRotationBelow(gameObject);
+            }
+
+            if (Input.mouseScrollDelta.y != 0)
+            {
+                float yAngle = Input.mouseScrollDelta.y;
+                if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+                {
+                    yAngle *= 5;
+                }
+
+                Placing.Rotate(0, yAngle, 0);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerManager), "CleanUpPlaceMesh")]
+    class PlayerManager_GetLayerMaskForPlaceMeshRaycast
+    {
+        static void Postfix()
+        {
+            Placing.RemoveGearItemsFromPhysicalCollisionMask();
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerManager), "ProcessInspectablePickupItem")]
+    class PlayerManager_ProcessInspectablePickupItem
+    {
+        static bool Prefix(GearItem pickupItem, ref bool __result)
+        {
+            if (Placing.IsBlockedFromAbove(pickupItem.gameObject))
+            {
+                Placing.SignalItemBlocked();
+                __result = false;
+                return false;
+            }
+
+            return true;
         }
     }
 
     [HarmonyPatch(typeof(PlayerManager), "StartPlaceMesh")]
     class PlayerManager_StartPlaceMesh
     {
-        public static void Postfix(PlayerManager __instance)
+        static void Postfix(PlayerManager __instance, GameObject objectToPlace, bool __result)
         {
-            PlacingRotation.InitializeRotation(__instance);
+            if (__result)
+            {
+                Placing.AddGearItemsToPhysicalCollisionMask();
+                Placing.InitializeRotation(__instance);
+
+                // workaround for a bug in PlayerManager.PrepareGhostedObject which resets the layer to vp_Layer.Gear after setting it to vp_Layer.IgnoreRaycast
+                Utils.ChangeLayersForGearItem(objectToPlace, vp_Layer.IgnoreRaycast);
+            }
+        }
+
+        static bool Prefix(PlayerManager __instance, GameObject objectToPlace, ref bool __result)
+        {
+            if (Placing.IsBlockedFromAbove(objectToPlace))
+            {
+                Placing.SignalItemBlocked();
+                __result = false;
+                return false;
+            }
+
+            return true;
         }
     }
 }
