@@ -15,3 +15,5 @@ Hold down `Shift` for fine-grained rotation control.
 
 
 For installation instructions see [Installing-a-Mod](https://github.com/WulfMarius/ModComponent/wiki/Installing-a-Mod)
+
+There's also a [video on Youtube](https://www.youtube.com/watch?v=LoJ49AhSNTY)
