@@ -9,7 +9,6 @@ namespace BetterPlacing
         static void Postfix(PlayerManager __instance, ref MeshLocationCategory __result)
         {
             GameObject gameObject = __instance.GetObjectToPlace();
-            Debug.Log("DoPositionCheck: objectToPlace.layer = " + gameObject.layer);
 
             if (__result != MeshLocationCategory.Valid && Input.GetKey(KeyCode.L))
             {
