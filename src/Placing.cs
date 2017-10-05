@@ -20,7 +20,6 @@ namespace BetterPlacing
         public static void OnLoad()
         {
             AddTranslations();
-            PrepareGearItems();
         }
 
         internal static void AddGearItemsToPhysicalCollisionMask()
@@ -38,21 +37,35 @@ namespace BetterPlacing
 
         internal static bool IsBlockedFromAbove(GameObject gameObject)
         {
-            BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
+            BoxCollider boxCollider = gameObject.GetComponentInChildren<BoxCollider>();
             if (boxCollider == null)
             {
                 return false;
             }
 
-            GameObject gearItemAbove = GetGearItemAbove(gameObject, boxCollider.size.y + RAYCAST_DISTANCE);
-            if (gearItemAbove == null)
+            List<GameObject> gearItemsAbove = GetGearItemsAbove(gameObject, boxCollider);
+            foreach (GameObject eachGearItemAbove in gearItemsAbove)
             {
-                return false;
+                Vector3 relativePosition = eachGearItemAbove.transform.position - gameObject.transform.position;
+                Vector3 projectedRelativePosition = Vector3.Project(relativePosition, gameObject.transform.up);
+
+                var colliderHeight = gameObject.transform.TransformVector(boxCollider.size).y;
+                if (Mathf.Abs(projectedRelativePosition.magnitude - colliderHeight) <= CONTACT_DISTANCE)
+                {
+                    return true;
+                }
             }
 
-            Vector3 relativePosition = gearItemAbove.transform.position - gameObject.transform.position;
-            Vector3 projectedRelativePosition = Vector3.Project(relativePosition, gameObject.transform.up);
-            return Mathf.Abs(projectedRelativePosition.magnitude - gameObject.GetComponent<BoxCollider>().size.y) <= CONTACT_DISTANCE;
+            return false;
+        }
+
+        internal static void PrepareGearItems()
+        {
+            GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
+            foreach (GearItem eachGearItem in gearItems)
+            {
+                PrepareGameObject(eachGearItem.gameObject);
+            }
         }
 
         internal static void RemoveGearItemsFromPhysicalCollisionMask()
@@ -141,10 +154,13 @@ namespace BetterPlacing
             MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
             foreach (MeshFilter eachMeshFilter in meshFilters)
             {
-                meshHeight = Mathf.Max(meshHeight, eachMeshFilter.transform.TransformVector(eachMeshFilter.mesh.bounds.size).y);
+                GameObject transformObject = new GameObject();
+                transformObject.transform.localRotation = eachMeshFilter.transform.localRotation;
+                transformObject.transform.localScale = eachMeshFilter.transform.localScale;
+                meshHeight = Mathf.Max(meshHeight, Mathf.Abs(transformObject.transform.TransformVector(eachMeshFilter.mesh.bounds.size).y));
             }
 
-            if (meshHeight == -1)
+            if (meshHeight <= 0)
             {
                 return;
             }
@@ -153,18 +169,25 @@ namespace BetterPlacing
             boxCollider.size = new Vector3(boxCollider.size.x, meshHeight - 2 * COLLIDER_OFFSET, boxCollider.size.z);
         }
 
-        private static GameObject GetGearItemAbove(GameObject gameObject, float maxDistance)
+        private static List<GameObject> GetGearItemsAbove(GameObject gameObject, BoxCollider boxCollider)
         {
-            RaycastHit[] hits = Physics.RaycastAll(gameObject.transform.position, gameObject.transform.up, maxDistance, 1 << vp_Layer.Gear);
+            var origin = boxCollider.bounds.center;
+            var halfExtents = boxCollider.bounds.extents * 0.5f;
+            var direction = gameObject.transform.up;
+            var maxDistance = gameObject.transform.TransformVector(boxCollider.size).y + RAYCAST_DISTANCE;
+
+            List<GameObject> result = new List<GameObject>();
+
+            RaycastHit[] hits = Physics.BoxCastAll(origin, halfExtents, direction, Quaternion.identity, maxDistance);
             foreach (RaycastHit eachHit in hits)
             {
-                if (eachHit.transform != gameObject.transform)
+                if (!eachHit.transform.IsChildOf(gameObject.transform))
                 {
-                    return eachHit.collider.gameObject;
+                    result.Add(eachHit.collider.gameObject);
                 }
             }
 
-            return null;
+            return result;
         }
 
         private static GameObject GetGearItemBelow(GameObject gameObject, float maxDistance)
@@ -190,15 +213,6 @@ namespace BetterPlacing
 
             FixBoxCollider(gameObject);
             RemoveNoCollidePlayer(gameObject);
-        }
-
-        private static void PrepareGearItems()
-        {
-            GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
-            foreach (GearItem eachGearItem in gearItems)
-            {
-                PrepareGameObject(eachGearItem.gameObject);
-            }
         }
 
         private static void RemoveNoCollidePlayer(GameObject gameObject)

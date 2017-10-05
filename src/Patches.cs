@@ -3,9 +3,37 @@ using UnityEngine;
 
 namespace BetterPlacing
 {
+    [HarmonyPatch(typeof(Panel_MainMenu), "Awake")]
+    class Panel_MainMenu_Awake
+    {
+        public static void Prefix()
+        {
+            Placing.PrepareGearItems();
+        }
+    }
+
+    [HarmonyPatch(typeof(Wind), "IsPositionOccludedFromWind")]
+    class Wind_IsPositionOccludedFromWind
+    {
+        public static void Prefix()
+        {
+            Placing.AddGearItemsToPhysicalCollisionMask();
+        }
+
+        public static void Postfix()
+        {
+            Placing.RemoveGearItemsFromPhysicalCollisionMask();
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerManager), "DoPositionCheck")]
     class PlayerManager_DoPositionCheck
     {
+        public static void Prefix()
+        {
+            Placing.AddGearItemsToPhysicalCollisionMask();
+        }
+
         static void Postfix(PlayerManager __instance, ref MeshLocationCategory __result)
         {
             GameObject gameObject = __instance.GetObjectToPlace();
