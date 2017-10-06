@@ -172,19 +172,27 @@ namespace BetterPlacing
         private static List<GameObject> GetGearItemsAbove(GameObject gameObject, BoxCollider boxCollider)
         {
             var origin = boxCollider.bounds.center;
-            var halfExtents = boxCollider.bounds.extents * 0.5f;
+            var halfExtents = boxCollider.bounds.extents;
+            halfExtents.y = CONTACT_DISTANCE;
             var direction = gameObject.transform.up;
-            var maxDistance = gameObject.transform.TransformVector(boxCollider.size).y + RAYCAST_DISTANCE;
+            var maxDistance = boxCollider.bounds.extents.y + RAYCAST_DISTANCE;
 
             List<GameObject> result = new List<GameObject>();
 
             RaycastHit[] hits = Physics.BoxCastAll(origin, halfExtents, direction, Quaternion.identity, maxDistance);
             foreach (RaycastHit eachHit in hits)
             {
-                if (!eachHit.transform.IsChildOf(gameObject.transform))
+                if (eachHit.transform.IsChildOf(gameObject.transform))
                 {
-                    result.Add(eachHit.collider.gameObject);
+                    continue;
                 }
+
+                if (eachHit.collider.GetComponentInParent<GearItem>() == null)
+                {
+                    continue;
+                }
+
+                result.Add(eachHit.collider.gameObject);
             }
 
             return result;
