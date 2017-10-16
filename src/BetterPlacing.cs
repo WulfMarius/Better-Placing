@@ -19,6 +19,7 @@ namespace BetterPlacing
 
         public static void OnLoad()
         {
+            Debug.Log("[Better-Placing]: Version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             AddTranslations();
         }
 
@@ -87,7 +88,6 @@ namespace BetterPlacing
             GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
             foreach (GearItem eachGearItem in gearItems)
             {
-                Debug.Log("Preparing " + eachGearItem);
                 PrepareGameObject(eachGearItem.gameObject);
             }
         }
