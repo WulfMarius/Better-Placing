@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace BetterPlacing
 {
-    internal class Placing
+    internal class BetterPlacing
     {
         private const float COLLIDER_OFFSET = 0.001f;
         private const float CONTACT_DISTANCE = 0.01f;
@@ -29,7 +29,7 @@ namespace BetterPlacing
 
         internal static void InitializeRotation(PlayerManager playerManager)
         {
-            Placing.playerManager = playerManager;
+            BetterPlacing.playerManager = playerManager;
             fieldInfo = AccessTools.Field(playerManager.GetType(), "m_RotationInCameraSpace");
 
             rotation = (Quaternion)fieldInfo.GetValue(playerManager);
@@ -59,11 +59,35 @@ namespace BetterPlacing
             return false;
         }
 
+        internal static bool IsPlacingStackableGearItem(PlayerManager playerManager)
+        {
+            GameObject objectToPlace = playerManager.GetObjectToPlace();
+            if (objectToPlace == null)
+            {
+                return false;
+            }
+
+            Bed bed = objectToPlace.GetComponent<Bed>();
+            if (bed != null && bed.GetState() == BedRollState.Placed)
+            {
+                return false;
+            }
+
+            GearItem gearItem = objectToPlace.GetComponent<GearItem>();
+            if (gearItem == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         internal static void PrepareGearItems()
         {
             GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
             foreach (GearItem eachGearItem in gearItems)
             {
+                Debug.Log("Preparing " + eachGearItem);
                 PrepareGameObject(eachGearItem.gameObject);
             }
         }
@@ -169,6 +193,20 @@ namespace BetterPlacing
             boxCollider.size = new Vector3(boxCollider.size.x, meshHeight - 2 * COLLIDER_OFFSET, boxCollider.size.z);
         }
 
+        private static GameObject GetGearItemBelow(GameObject gameObject, float maxDistance)
+        {
+            RaycastHit[] hits = Physics.RaycastAll(gameObject.transform.position + gameObject.transform.up * CONTACT_DISTANCE, -gameObject.transform.up, maxDistance, 1 << vp_Layer.Gear);
+            foreach (RaycastHit eachHit in hits)
+            {
+                if (eachHit.transform != gameObject.transform)
+                {
+                    return eachHit.collider.gameObject;
+                }
+            }
+
+            return null;
+        }
+
         private static List<GameObject> GetGearItemsAbove(GameObject gameObject, BoxCollider boxCollider)
         {
             var origin = boxCollider.bounds.center;
@@ -196,20 +234,6 @@ namespace BetterPlacing
             }
 
             return result;
-        }
-
-        private static GameObject GetGearItemBelow(GameObject gameObject, float maxDistance)
-        {
-            RaycastHit[] hits = Physics.RaycastAll(gameObject.transform.position + gameObject.transform.up * CONTACT_DISTANCE, -gameObject.transform.up, maxDistance, 1 << vp_Layer.Gear);
-            foreach (RaycastHit eachHit in hits)
-            {
-                if (eachHit.transform != gameObject.transform)
-                {
-                    return eachHit.collider.gameObject;
-                }
-            }
-
-            return null;
         }
 
         private static void PrepareGameObject(GameObject gameObject)
@@ -243,7 +267,7 @@ namespace BetterPlacing
 
         private static void SetRotation(Quaternion rotation)
         {
-            Placing.rotation = rotation;
+            BetterPlacing.rotation = rotation;
             fieldInfo.SetValue(playerManager, rotation);
         }
     }

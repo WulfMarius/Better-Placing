@@ -4,59 +4,48 @@ using UnityEngine;
 namespace BetterPlacing
 {
     [HarmonyPatch(typeof(Panel_MainMenu), "Awake")]
-    class Panel_MainMenu_Awake
+    internal class Panel_MainMenu_Awake
     {
         public static void Prefix()
         {
-            Placing.PrepareGearItems();
-        }
-    }
-
-    [HarmonyPatch(typeof(Wind), "IsPositionOccludedFromWind")]
-    class Wind_IsPositionOccludedFromWind
-    {
-        public static void Prefix()
-        {
-            Placing.AddGearItemsToPhysicalCollisionMask();
-        }
-
-        public static void Postfix()
-        {
-            Placing.RemoveGearItemsFromPhysicalCollisionMask();
+            BetterPlacing.PrepareGearItems();
         }
     }
 
     [HarmonyPatch(typeof(PlayerManager), "DoPositionCheck")]
-    class PlayerManager_DoPositionCheck
+    internal class PlayerManager_DoPositionCheck
     {
-        public static void Prefix()
+        public static void Prefix(PlayerManager __instance)
         {
-            Placing.AddGearItemsToPhysicalCollisionMask();
+            if (BetterPlacing.IsPlacingStackableGearItem(__instance))
+            {
+                BetterPlacing.AddGearItemsToPhysicalCollisionMask();
+            }
         }
 
-        static void Postfix(PlayerManager __instance, ref MeshLocationCategory __result)
+        private static void Postfix(PlayerManager __instance, ref MeshLocationCategory __result)
         {
             GameObject gameObject = __instance.GetObjectToPlace();
 
             if (__result != MeshLocationCategory.Valid && Input.GetKey(KeyCode.L))
             {
-                Placing.RestoreLastValidTransform(gameObject);
+                BetterPlacing.RestoreLastValidTransform(gameObject);
                 __result = MeshLocationCategory.Valid;
             }
 
             if (__result == MeshLocationCategory.Valid)
             {
-                Placing.StoreValidTransform(gameObject);
+                BetterPlacing.StoreValidTransform(gameObject);
 
                 if (Input.GetKey(KeyCode.P))
                 {
-                    Placing.SnapToPositionBelow(gameObject);
+                    BetterPlacing.SnapToPositionBelow(gameObject);
                 }
             }
 
             if (Input.GetKey(KeyCode.R))
             {
-                Placing.SnapToRotationBelow(gameObject);
+                BetterPlacing.SnapToRotationBelow(gameObject);
             }
 
             if (Input.mouseScrollDelta.y != 0)
@@ -67,28 +56,28 @@ namespace BetterPlacing
                     yAngle *= 5;
                 }
 
-                Placing.Rotate(0, yAngle, 0);
+                BetterPlacing.Rotate(0, yAngle, 0);
             }
         }
     }
 
     [HarmonyPatch(typeof(PlayerManager), "CleanUpPlaceMesh")]
-    class PlayerManager_GetLayerMaskForPlaceMeshRaycast
+    internal class PlayerManager_GetLayerMaskForPlaceMeshRaycast
     {
-        static void Postfix()
+        private static void Postfix()
         {
-            Placing.RemoveGearItemsFromPhysicalCollisionMask();
+            BetterPlacing.RemoveGearItemsFromPhysicalCollisionMask();
         }
     }
 
     [HarmonyPatch(typeof(PlayerManager), "ProcessInspectablePickupItem")]
-    class PlayerManager_ProcessInspectablePickupItem
+    internal class PlayerManager_ProcessInspectablePickupItem
     {
-        static bool Prefix(GearItem pickupItem, ref bool __result)
+        private static bool Prefix(GearItem pickupItem, ref bool __result)
         {
-            if (Placing.IsBlockedFromAbove(pickupItem.gameObject))
+            if (BetterPlacing.IsBlockedFromAbove(pickupItem.gameObject))
             {
-                Placing.SignalItemBlocked();
+                BetterPlacing.SignalItemBlocked();
                 __result = false;
                 return false;
             }
@@ -98,30 +87,45 @@ namespace BetterPlacing
     }
 
     [HarmonyPatch(typeof(PlayerManager), "StartPlaceMesh")]
-    class PlayerManager_StartPlaceMesh
+    internal class PlayerManager_StartPlaceMesh
     {
-        static void Postfix(PlayerManager __instance, GameObject objectToPlace, bool __result)
+        private static void Postfix(PlayerManager __instance, GameObject objectToPlace, bool __result)
         {
             if (__result)
             {
-                Placing.AddGearItemsToPhysicalCollisionMask();
-                Placing.InitializeRotation(__instance);
+                BetterPlacing.InitializeRotation(__instance);
 
-                // workaround for a bug in PlayerManager.PrepareGhostedObject which resets the layer to vp_Layer.Gear after setting it to vp_Layer.IgnoreRaycast
-                Utils.ChangeLayersForGearItem(objectToPlace, vp_Layer.IgnoreRaycast);
+                if (BetterPlacing.IsPlacingStackableGearItem(__instance))
+                {
+                    Utils.ChangeLayersForGearItem(objectToPlace, vp_Layer.IgnoreRaycast);
+                }
             }
         }
 
-        static bool Prefix(PlayerManager __instance, GameObject objectToPlace, ref bool __result)
+        private static bool Prefix(PlayerManager __instance, GameObject objectToPlace, ref bool __result)
         {
-            if (Placing.IsBlockedFromAbove(objectToPlace))
+            if (BetterPlacing.IsBlockedFromAbove(objectToPlace))
             {
-                Placing.SignalItemBlocked();
+                BetterPlacing.SignalItemBlocked();
                 __result = false;
                 return false;
             }
 
             return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(Wind), "IsPositionOccludedFromWind")]
+    internal class Wind_IsPositionOccludedFromWind
+    {
+        public static void Postfix()
+        {
+            BetterPlacing.RemoveGearItemsFromPhysicalCollisionMask();
+        }
+
+        public static void Prefix()
+        {
+            BetterPlacing.AddGearItemsToPhysicalCollisionMask();
         }
     }
 }
