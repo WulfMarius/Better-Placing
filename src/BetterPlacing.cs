@@ -157,6 +157,10 @@ namespace BetterPlacing
                         translations[i] = "Blockiert durch Gegenstand darüber";
                         break;
 
+                    case "Russian":
+                        translations[i] = "Заблокировано предметом выше";
+                        break;
+
                     default:
                         translations[i] = "Blocked by item above\nHelp me translate this!\nVisit https://github.com/WulfMarius/Better-Placing";
                         break;
