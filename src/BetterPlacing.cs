@@ -44,14 +44,15 @@ namespace BetterPlacing
                 return false;
             }
 
+            float colliderHeight = Vector3.Dot(gameObject.transform.up, gameObject.transform.TransformVector(boxCollider.size));
+
             List<GameObject> gearItemsAbove = GetGearItemsAbove(gameObject, boxCollider);
             foreach (GameObject eachGearItemAbove in gearItemsAbove)
             {
                 Vector3 relativePosition = eachGearItemAbove.transform.position - gameObject.transform.position;
-                Vector3 projectedRelativePosition = Vector3.Project(relativePosition, gameObject.transform.up);
-
-                var colliderHeight = gameObject.transform.TransformVector(boxCollider.size).y;
-                if (Mathf.Abs(projectedRelativePosition.magnitude - colliderHeight) <= CONTACT_DISTANCE)
+                float relativePositionHeight = Vector3.Dot(relativePosition, gameObject.transform.up);
+                var distance = Mathf.Abs(relativePositionHeight - colliderHeight);
+                if (distance <= CONTACT_DISTANCE)
                 {
                     return true;
                 }
