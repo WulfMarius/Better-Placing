@@ -14,6 +14,7 @@ Hold down `Shift` for fine-grained rotation control.
 * Press and hold `L` to place the item in the last valid location.
 
 
-For installation instructions see [Installing-a-Mod](https://github.com/WulfMarius/ModComponent/wiki/Installing-a-Mod)
+There are also some videos on Youtube showing [moving items](https://www.youtube.com/watch?v=LoJ49AhSNTY) and [moving furniture](https://youtu.be/zRJVPX35DtE).
 
-There's also a [video on Youtube](https://www.youtube.com/watch?v=LoJ49AhSNTY)
+> NOTE: This mod is not compatible with UModTLD<br/>
+> For installation instructions see [Installing-a-Mod](https://github.com/WulfMarius/ModComponent/wiki/Installing-a-Mod)
