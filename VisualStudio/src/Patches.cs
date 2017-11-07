@@ -131,40 +131,6 @@ namespace BetterPlacing
         }
     }
 
-    [HarmonyPatch(typeof(Utils), "OrientedBoundingBoxesOverlap")]
-    public class Utils_OrientedBoundingBoxesOverlap
-    {
-        public static bool Prefix(GameObject a, GameObject b, ref bool __result)
-        {
-            if (a == b)
-            {
-                __result = false;
-                return false;
-            }
-
-            Collider[] collidersA = a.GetComponentsInChildren<Collider>();
-            Collider[] collidersB = b.GetComponentsInChildren<Collider>();
-
-            Vector3 direction;
-            float distance;
-
-            foreach (Collider colliderA in collidersA)
-            {
-                foreach (Collider colliderB in collidersB)
-                {
-                    if (Physics.ComputePenetration(colliderA, colliderA.transform.position, colliderA.transform.rotation, colliderB, colliderB.transform.position, colliderB.transform.rotation, out direction, out distance))
-                    {
-                        __result = true;
-                        return false;
-                    }
-                }
-            }
-
-            __result = false;
-            return false;
-        }
-    }
-
     [HarmonyPatch(typeof(Panel_MainMenu), "Awake")]
     internal class Panel_MainMenu_Awake
     {

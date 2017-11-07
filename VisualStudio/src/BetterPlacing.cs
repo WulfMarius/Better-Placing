@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-using System.IO;
-
 namespace BetterPlacing
 {
     internal class BetterPlacing
@@ -47,24 +45,17 @@ namespace BetterPlacing
 
         internal static bool IsBlockedFromAbove(GameObject gameObject)
         {
-            BoxCollider[] boxColliders = gameObject.GetComponentsInChildren<BoxCollider>();
-            if (boxColliders == null)
-            {
-                return false;
-            }
+            RaycastHit hitInfo = new RaycastHit();
+            Ray ray = new Ray(Vector3.zero, Vector3.down);
 
-            foreach (var boxCollider in boxColliders)
+            Collider[] colliders = gameObject.GetComponentsInChildren<Collider>();
+            foreach (Collider eachCollider in colliders)
             {
-                float colliderHeight = Vector3.Dot(gameObject.transform.up, gameObject.transform.TransformVector(boxCollider.size)) / 2;
-
-                List<GameObject> gearItemsAbove = GetGearItemsAbove(gameObject, boxCollider);
-                foreach (GameObject eachGearItemAbove in gearItemsAbove)
+                List<GameObject> gearItemsAbove = GetGearItemsAbove(gameObject, eachCollider);
+                foreach (var eachGearItem in gearItemsAbove)
                 {
-                    Vector3 relativePosition = eachGearItemAbove.transform.position - boxCollider.center;
-                    float relativePositionHeight = Vector3.Dot(relativePosition, gameObject.transform.up);
-                    var distance = Mathf.Abs(relativePositionHeight - colliderHeight);
-
-                    if (distance <= CONTACT_DISTANCE)
+                    ray.origin = eachGearItem.transform.position;
+                    if (eachCollider.Raycast(ray, out hitInfo, CONTACT_DISTANCE))
                     {
                         return true;
                     }
@@ -272,7 +263,7 @@ namespace BetterPlacing
             return null;
         }
 
-        private static List<GameObject> GetGearItemsAbove(GameObject gameObject, BoxCollider boxCollider)
+        private static List<GameObject> GetGearItemsAbove(GameObject gameObject, Collider boxCollider)
         {
             var origin = boxCollider.bounds.center;
             var halfExtents = boxCollider.bounds.extents;
