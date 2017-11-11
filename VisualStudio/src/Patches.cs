@@ -26,7 +26,7 @@ namespace BetterPlacing
         {
             if (text == null || !BetterPlacing.IsPlacableFurniture(__instance))
             {
-                return false;
+                return true;
             }
 
             ModBreakDownSaveData saveData = Newtonsoft.Json.JsonConvert.DeserializeObject<ModBreakDownSaveData>(text);
