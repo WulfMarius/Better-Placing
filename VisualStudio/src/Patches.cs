@@ -3,22 +3,6 @@ using UnityEngine;
 
 namespace BetterPlacing
 {
-    [HarmonyPatch(typeof(BreakDown), "ProcessInteraction")]
-    public class BreakDown_ProcessInteraction
-    {
-        public static bool Prefix(BreakDown __instance, ref bool __result)
-        {
-            if (BetterPlacing.IsBlockedFromAbove(__instance.gameObject))
-            {
-                BetterPlacing.SignalItemBlocked();
-                __result = false;
-                return false;
-            }
-
-            return true;
-        }
-    }
-
     [HarmonyPatch(typeof(BreakDown), "Deserialize")]
     public class BreakDown_Deserialize
     {
@@ -45,6 +29,22 @@ namespace BetterPlacing
             }
 
             return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(BreakDown), "ProcessInteraction")]
+    public class BreakDown_ProcessInteraction
+    {
+        public static bool Prefix(BreakDown __instance, ref bool __result)
+        {
+            if (BetterPlacing.IsBlockedFromAbove(__instance.gameObject))
+            {
+                BetterPlacing.SignalItemBlocked();
+                __result = false;
+                return false;
+            }
+
+            return true;
         }
     }
 
@@ -131,15 +131,6 @@ namespace BetterPlacing
         }
     }
 
-    [HarmonyPatch(typeof(Panel_MainMenu), "Awake")]
-    internal class Panel_MainMenu_Awake
-    {
-        public static void Prefix()
-        {
-            BetterPlacing.PrepareGearItems();
-        }
-    }
-
     [HarmonyPatch(typeof(PlayerManager), "DoPositionCheck")]
     internal class PlayerManager_DoPositionCheck
     {
@@ -206,7 +197,7 @@ namespace BetterPlacing
             }
             else if (BetterPlacing.IsPlacableFurniture(gameObject))
             {
-                BetterPlacing.AddFurnitureFromPhysicalCollisionMask();
+                BetterPlacing.AddFurnitureToPhysicalCollisionMask();
             }
         }
     }
@@ -238,11 +229,12 @@ namespace BetterPlacing
 
                 if (BetterPlacing.IsStackableGearItem(objectToPlace))
                 {
-                    Utils.ChangeLayersForGearItem(objectToPlace, vp_Layer.NoCollidePlayer);
+                    BetterPlacing.PrepareGearItem(objectToPlace);
+                    objectToPlace.layer = vp_Layer.IgnoreRaycast;
                 }
                 else if (BetterPlacing.IsPlacableFurniture(objectToPlace))
                 {
-                    Utils.ChangeLayersForGearItem(objectToPlace, vp_Layer.NoCollidePlayer);
+                    objectToPlace.layer = vp_Layer.NoCollidePlayer;
                 }
             }
         }
@@ -257,6 +249,15 @@ namespace BetterPlacing
             }
 
             return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(SaveGameSystem), "RestoreGame")]
+    internal class SaveGameSystem_RestoreGame
+    {
+        public static void Postfix()
+        {
+            BetterPlacing.PrepareGearItems();
         }
     }
 

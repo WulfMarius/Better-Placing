@@ -25,7 +25,7 @@ namespace BetterPlacing
             PlacableFurniture.Initialize();
         }
 
-        internal static void AddFurnitureFromPhysicalCollisionMask()
+        internal static void AddFurnitureToPhysicalCollisionMask()
         {
             Utils.m_PhysicalCollisionLayerMask |= 1 << vp_Layer.InteractiveProp;
         }
@@ -102,12 +102,23 @@ namespace BetterPlacing
             return true;
         }
 
+        internal static void PrepareGearItem(GameObject gameObject)
+        {
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            FixBoxCollider(gameObject);
+            RemoveNoCollidePlayer(gameObject);
+        }
+
         internal static void PrepareGearItems()
         {
             GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
             foreach (GearItem eachGearItem in gearItems)
             {
-                PrepareGameObject(eachGearItem.gameObject);
+                PrepareGearItem(eachGearItem.gameObject);
             }
         }
 
@@ -290,17 +301,6 @@ namespace BetterPlacing
             }
 
             return result;
-        }
-
-        private static void PrepareGameObject(GameObject gameObject)
-        {
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            FixBoxCollider(gameObject);
-            RemoveNoCollidePlayer(gameObject);
         }
 
         private static void RemoveNoCollidePlayer(GameObject gameObject)
