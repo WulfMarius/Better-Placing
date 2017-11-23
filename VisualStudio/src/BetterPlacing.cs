@@ -54,7 +54,7 @@ namespace BetterPlacing
                 List<GameObject> gearItemsAbove = GetGearItemsAbove(gameObject, eachCollider);
                 foreach (var eachGearItem in gearItemsAbove)
                 {
-                    ray.origin = eachGearItem.transform.position;
+                    ray.origin = eachGearItem.transform.position + Vector3.up * COLLIDER_OFFSET;
                     if (eachCollider.Raycast(ray, out hitInfo, CONTACT_DISTANCE))
                     {
                         return true;
@@ -118,7 +118,10 @@ namespace BetterPlacing
             GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
             foreach (GearItem eachGearItem in gearItems)
             {
-                PrepareGearItem(eachGearItem.gameObject);
+                if (IsStackableGearItem(eachGearItem.gameObject))
+                {
+                    PrepareGearItem(eachGearItem.gameObject);
+                }
             }
         }
 
@@ -242,6 +245,7 @@ namespace BetterPlacing
             }
 
             float meshHeight = -1;
+
             MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
             foreach (MeshFilter eachMeshFilter in meshFilters)
             {
@@ -257,7 +261,7 @@ namespace BetterPlacing
             }
 
             boxCollider.center = new Vector3(boxCollider.center.x, meshHeight / 2f + COLLIDER_OFFSET, boxCollider.center.z);
-            boxCollider.size = new Vector3(boxCollider.size.x, meshHeight - 2 * COLLIDER_OFFSET, boxCollider.size.z);
+            boxCollider.size = new Vector3(boxCollider.size.x, meshHeight - COLLIDER_OFFSET, boxCollider.size.z);
         }
 
         private static GameObject GetGearItemBelow(GameObject gameObject, float maxDistance)
@@ -276,11 +280,12 @@ namespace BetterPlacing
 
         private static List<GameObject> GetGearItemsAbove(GameObject gameObject, Collider boxCollider)
         {
-            var origin = boxCollider.bounds.center;
-            var halfExtents = boxCollider.bounds.extents;
+            var bounds = boxCollider.bounds;
+            var origin = bounds.center;
+            var halfExtents = bounds.extents;
             halfExtents.y = CONTACT_DISTANCE;
             var direction = gameObject.transform.up;
-            var maxDistance = boxCollider.bounds.extents.y + RAYCAST_DISTANCE;
+            var maxDistance = bounds.extents.y + RAYCAST_DISTANCE;
 
             List<GameObject> result = new List<GameObject>();
 
@@ -305,19 +310,12 @@ namespace BetterPlacing
 
         private static void RemoveNoCollidePlayer(GameObject gameObject)
         {
-            List<Transform> transforms = new List<Transform>();
-
             foreach (Transform eachTransform in gameObject.transform)
             {
                 if (eachTransform.gameObject.layer == vp_Layer.NoCollidePlayer)
                 {
-                    transforms.Add(eachTransform);
+                    Object.Destroy(eachTransform.gameObject);
                 }
-            }
-
-            foreach (Transform eachTransform in transforms)
-            {
-                eachTransform.parent = null;
             }
         }
 

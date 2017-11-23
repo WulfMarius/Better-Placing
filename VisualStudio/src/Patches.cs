@@ -235,6 +235,7 @@ namespace BetterPlacing
                 else if (BetterPlacing.IsPlacableFurniture(objectToPlace))
                 {
                     objectToPlace.layer = vp_Layer.NoCollidePlayer;
+                    vp_Layer.Set(objectToPlace, vp_Layer.NoCollidePlayer, true);
                 }
             }
         }
