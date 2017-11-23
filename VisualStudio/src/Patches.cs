@@ -131,6 +131,15 @@ namespace BetterPlacing
         }
     }
 
+    [HarmonyPatch(typeof(Panel_MainMenu), "Awake")]
+    internal class Panel_MainMenu_Awake
+    {
+        public static void Postfix()
+        {
+            BetterPlacing.PrepareGearItems();
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerManager), "DoPositionCheck")]
     internal class PlayerManager_DoPositionCheck
     {
@@ -250,15 +259,6 @@ namespace BetterPlacing
             }
 
             return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(SaveGameSystem), "RestoreGame")]
-    internal class SaveGameSystem_RestoreGame
-    {
-        public static void Postfix()
-        {
-            BetterPlacing.PrepareGearItems();
         }
     }
 
