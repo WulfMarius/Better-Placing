@@ -1,8 +1,46 @@
 ﻿using Harmony;
 using UnityEngine;
 
+using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
+
 namespace BetterPlacing
 {
+    [HarmonyPatch(typeof(BreakDown), "DeserializeAll")]
+    public class BreakDown_DeserializeAll
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode != OpCodes.Call)
+                {
+                    continue;
+                }
+
+                MethodInfo methodInfo = codes[i].operand as MethodInfo;
+                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Newtonsoft.Json.JsonConvert) || !methodInfo.IsGenericMethod)
+                {
+                    continue;
+                }
+
+                System.Type[] genericArguments = methodInfo.GetGenericArguments();
+                if (genericArguments.Length != 1 || genericArguments[0] != typeof(BreakDownSaveData))
+                {
+                    continue;
+                }
+
+                methodInfo = methodInfo.GetBaseDefinition().MakeGenericMethod(typeof(ModBreakDownSaveData));
+                codes[i].operand = methodInfo;
+            }
+
+            return codes;
+        }
+    }
+
     [HarmonyPatch(typeof(BreakDown), "Deserialize")]
     public class BreakDown_Deserialize
     {
