@@ -16,5 +16,7 @@ Hold down `Shift` for fine-grained rotation control.
 
 There are also some videos on Youtube showing [moving items](https://www.youtube.com/watch?v=LoJ49AhSNTY) and [moving furniture](https://youtu.be/zRJVPX35DtE).
 
-> NOTE: This mod is not compatible with UModTLD<br/>
+> NOTE: UModTld will now automatically disable its own item placing adjustments when Better-Placing is installed as well, meaning you can use both mods at the same time.
+> Make sure you get the lastest version of UModTld from [http://ubersoft.org/umodtld/](http://ubersoft.org/umodtld/)
+
 > For installation instructions see [Installing-a-Mod](https://github.com/WulfMarius/ModComponent/wiki/Installing-a-Mod)
