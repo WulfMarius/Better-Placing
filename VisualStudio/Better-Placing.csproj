@@ -40,7 +40,7 @@
     <Compile Include="src\ModBreakDownSaveData.cs" />
     <Compile Include="src\Patches.cs" />
     <Compile Include="src\BetterPlacing.cs" />
-    <Compile Include="src\PlacableFurniture.cs" />
+    <Compile Include="src\PlaceableFurniture.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

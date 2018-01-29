@@ -22,7 +22,7 @@ namespace BetterPlacing
             Debug.Log("[Better-Placing]: Version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
 
             AddTranslations();
-            PlacableFurniture.Initialize();
+            PlaceableFurniture.Initialize();
         }
 
         internal static void AddFurnitureToPhysicalCollisionMask()
@@ -67,17 +67,17 @@ namespace BetterPlacing
 
         internal static bool IsPlacableFurniture(BreakDown breakDown)
         {
-            return IsPlacableFurniture(breakDown == null ? null : breakDown.gameObject);
+            return IsPlaceableFurniture(breakDown == null ? null : breakDown.gameObject);
         }
 
-        internal static bool IsPlacableFurniture(GameObject gameObject)
+        internal static bool IsPlaceableFurniture(GameObject gameObject)
         {
             if (gameObject == null)
             {
                 return false;
             }
 
-            return PlacableFurniture.GetPrefab(gameObject.name) != null;
+            return PlaceableFurniture.GetPrefab(gameObject.name) != null;
         }
 
         internal static bool IsStackableGearItem(GameObject gameObject)
@@ -132,7 +132,7 @@ namespace BetterPlacing
                 return;
             }
 
-            GameObject prefab = PlacableFurniture.GetPrefab(gameObject.name);
+            GameObject prefab = PlaceableFurniture.GetPrefab(gameObject.name);
             if (prefab == null)
             {
                 return;
@@ -159,6 +159,12 @@ namespace BetterPlacing
         internal static void RemoveGearItemsFromPhysicalCollisionMask()
         {
             Utils.m_PhysicalCollisionLayerMask &= ~(1 << vp_Layer.Gear);
+        }
+
+        internal static void RestoreFurnitureLayers(GameObject furniture)
+        {
+            vp_Layer.Set(furniture, vp_Layer.InteractiveProp, true);
+            vp_Layer.Set(furniture, vp_Layer.Default, false);
         }
 
         internal static void RestoreLastValidTransform(GameObject gameObject)

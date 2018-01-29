@@ -5,13 +5,13 @@ using UnityEngine;
 
 namespace BetterPlacing
 {
-    internal class PlacableFurniture
+    internal class PlaceableFurniture
     {
         private static AssetBundle assetBundle;
 
         private static Dictionary<string, string> prefabNames = new Dictionary<string, string>();
 
-        public static GameObject GetPrefab(string gameObjectName)
+        internal static GameObject GetPrefab(string gameObjectName)
         {
             foreach (string eachPrefabName in prefabNames.Keys)
             {
@@ -24,7 +24,7 @@ namespace BetterPlacing
             return null;
         }
 
-        public static bool HasPrefab(string gameObjectName)
+        internal static bool HasPrefab(string gameObjectName)
         {
             foreach (string eachPrefabName in prefabNames.Keys)
             {
@@ -37,7 +37,7 @@ namespace BetterPlacing
             return false;
         }
 
-        public static void Initialize()
+        internal static void Initialize()
         {
             string modDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string assetBundlePath = Path.Combine(modDirectory, "better-placing/better-placing.unity3d");

@@ -26,7 +26,7 @@ GameObject:
   - component: {fileID: 65236871670798482}
   - component: {fileID: 65846263477072498}
   m_Layer: 0
-  m_Name: Obj_ChairA_LOD0
+  m_Name: Obj_ChairA
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

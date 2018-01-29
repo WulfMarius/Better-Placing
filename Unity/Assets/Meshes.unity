@@ -602,7 +602,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 1718961732710532, guid: 44fbcd2ff14b99646bf8c9aa6c672565, type: 2}
       propertyPath: m_Name
-      value: Obj_ChairA_LOD0
+      value: Obj_ChairA
       objectReference: {fileID: 0}
     - target: {fileID: 1718961732710532, guid: 44fbcd2ff14b99646bf8c9aa6c672565, type: 2}
       propertyPath: m_IsActive

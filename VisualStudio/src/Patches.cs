@@ -1,14 +1,72 @@
 ﻿using Harmony;
-using UnityEngine;
-
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using UnityEngine;
 
 namespace BetterPlacing
 {
+    [HarmonyPatch(typeof(BreakDown), "Deserialize")]
+    internal class BreakDown_Deserialize
+    {
+        private static bool Prefix(BreakDown __instance, string text)
+        {
+            if (text == null || !BetterPlacing.IsPlacableFurniture(__instance))
+            {
+                return true;
+            }
+
+            ModBreakDownSaveData saveData = Newtonsoft.Json.JsonConvert.DeserializeObject<ModBreakDownSaveData>(text);
+            if (saveData.m_HasBeenBrokenDown)
+            {
+                return true;
+            }
+
+            BetterPlacing.PreparePlacableFurniture(__instance.gameObject);
+
+            __instance.transform.parent.position = saveData.m_Position;
+            __instance.gameObject.SetActive(true);
+            if (saveData.m_Rotation.x != 0 || saveData.m_Rotation.y != 0 || saveData.m_Rotation.z != 0)
+            {
+                __instance.transform.parent.rotation = Quaternion.Euler(saveData.m_Rotation);
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode != OpCodes.Call)
+                {
+                    continue;
+                }
+
+                MethodInfo methodInfo = codes[i].operand as MethodInfo;
+                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Newtonsoft.Json.JsonConvert) || !methodInfo.IsGenericMethod)
+                {
+                    continue;
+                }
+
+                System.Type[] genericArguments = methodInfo.GetGenericArguments();
+                if (genericArguments.Length != 1 || genericArguments[0] != typeof(BreakDownSaveData))
+                {
+                    continue;
+                }
+
+                methodInfo = methodInfo.GetBaseDefinition().MakeGenericMethod(typeof(ModBreakDownSaveData));
+                codes[i].operand = methodInfo;
+            }
+
+            return codes;
+        }
+    }
+
     [HarmonyPatch(typeof(BreakDown), "DeserializeAll")]
-    public class BreakDown_DeserializeAll
+    internal class BreakDown_DeserializeAll
     {
         internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -41,37 +99,8 @@ namespace BetterPlacing
         }
     }
 
-    [HarmonyPatch(typeof(BreakDown), "Deserialize")]
-    public class BreakDown_Deserialize
-    {
-        public static bool Prefix(BreakDown __instance, string text)
-        {
-            if (text == null || !BetterPlacing.IsPlacableFurniture(__instance))
-            {
-                return true;
-            }
-
-            ModBreakDownSaveData saveData = Newtonsoft.Json.JsonConvert.DeserializeObject<ModBreakDownSaveData>(text);
-            if (saveData.m_HasBeenBrokenDown)
-            {
-                return true;
-            }
-
-            BetterPlacing.PreparePlacableFurniture(__instance.gameObject);
-
-            __instance.transform.position = saveData.m_Position;
-            __instance.gameObject.SetActive(true);
-            if (saveData.m_Rotation.x != 0 || saveData.m_Rotation.y != 0 || saveData.m_Rotation.z != 0)
-            {
-                __instance.transform.rotation = Quaternion.Euler(saveData.m_Rotation);
-            }
-
-            return false;
-        }
-    }
-
     [HarmonyPatch(typeof(BreakDown), "ProcessInteraction")]
-    public class BreakDown_ProcessInteraction
+    internal class BreakDown_ProcessInteraction
     {
         public static bool Prefix(BreakDown __instance, ref bool __result)
         {
@@ -87,7 +116,7 @@ namespace BetterPlacing
     }
 
     [HarmonyPatch(typeof(BreakDown), "Serialize")]
-    public class BreakDown_Serialize
+    internal class BreakDown_Serialize
     {
         public static bool Prefix(BreakDown __instance, ref string __result)
         {
@@ -103,68 +132,6 @@ namespace BetterPlacing
             saveData.m_Guid = Utils.GetGuidFromGameObject(__instance.gameObject);
 
             __result = Newtonsoft.Json.JsonConvert.SerializeObject(saveData);
-            return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(PlayerManager), "InteractiveObjectsProcessAltFire")]
-    public class PlayerManager_InteractiveObjectsProcessAltFire
-    {
-        public static bool Prefix(PlayerManager __instance)
-        {
-            var gameObject = __instance.m_InteractiveObjectUnderCrosshair;
-
-            if (BetterPlacing.IsPlacableFurniture(gameObject))
-            {
-                BetterPlacing.PreparePlacableFurniture(gameObject);
-
-                __instance.StartPlaceMesh(gameObject, 5f, false);
-                return false;
-            }
-
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(PlayerManager), "ObjectToPlaceOverlapsWithObjectsThatBlockPlacement")]
-    public class PlayerManager_ObjectToPlaceOverlapsWithObjectsThatBlockPlacement
-    {
-        public static bool Prefix(PlayerManager __instance, ref bool __result)
-        {
-            var gameObject = __instance.GetObjectToPlace();
-            if (!BetterPlacing.IsPlacableFurniture(gameObject))
-            {
-                return true;
-            }
-
-            Collider[] colliders = gameObject.GetComponentsInChildren<Collider>();
-            foreach (var eachCollider in colliders)
-            {
-                Collider[] otherColliders = Physics.OverlapSphere(eachCollider.bounds.center, eachCollider.bounds.size.magnitude / 2, 918016);
-                foreach (var eachOtherCollider in otherColliders)
-                {
-                    if (!eachOtherCollider.gameObject.activeInHierarchy)
-                    {
-                        continue;
-                    }
-
-                    if (eachOtherCollider.transform.IsChildOf(gameObject.transform))
-                    {
-                        continue;
-                    }
-
-                    Vector3 direction;
-                    float distance;
-
-                    if (Physics.ComputePenetration(eachCollider, eachCollider.transform.position, eachCollider.transform.rotation, eachOtherCollider, eachOtherCollider.transform.position, eachOtherCollider.transform.rotation, out direction, out distance))
-                    {
-                        __result = true;
-                        return false;
-                    }
-                }
-            }
-
-            __result = false;
             return false;
         }
     }
@@ -188,7 +155,7 @@ namespace BetterPlacing
             {
                 BetterPlacing.AddGearItemsToPhysicalCollisionMask();
             }
-            else if (BetterPlacing.IsPlacableFurniture(gameObject))
+            else if (BetterPlacing.IsPlaceableFurniture(gameObject))
             {
                 BetterPlacing.RemoveFurnitureFromPhysicalCollisionMask();
             }
@@ -242,10 +209,74 @@ namespace BetterPlacing
             {
                 BetterPlacing.RemoveGearItemsFromPhysicalCollisionMask();
             }
-            else if (BetterPlacing.IsPlacableFurniture(gameObject))
+            else if (BetterPlacing.IsPlaceableFurniture(gameObject))
             {
                 BetterPlacing.AddFurnitureToPhysicalCollisionMask();
+                BetterPlacing.RestoreFurnitureLayers(gameObject);
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerManager), "InteractiveObjectsProcessAltFire")]
+    internal class PlayerManager_InteractiveObjectsProcessAltFire
+    {
+        public static bool Prefix(PlayerManager __instance)
+        {
+            var gameObject = __instance.m_InteractiveObjectUnderCrosshair;
+
+            if (BetterPlacing.IsPlaceableFurniture(gameObject))
+            {
+                BetterPlacing.PreparePlacableFurniture(gameObject);
+
+                __instance.StartPlaceMesh(gameObject.transform.parent.gameObject, 5f, false);
+
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerManager), "ObjectToPlaceOverlapsWithObjectsThatBlockPlacement")]
+    internal class PlayerManager_ObjectToPlaceOverlapsWithObjectsThatBlockPlacement
+    {
+        public static bool Prefix(PlayerManager __instance, ref bool __result)
+        {
+            var gameObject = __instance.GetObjectToPlace();
+            if (!BetterPlacing.IsPlaceableFurniture(gameObject))
+            {
+                return true;
+            }
+
+            Collider[] colliders = gameObject.GetComponentsInChildren<Collider>();
+            foreach (var eachCollider in colliders)
+            {
+                Collider[] otherColliders = Physics.OverlapSphere(eachCollider.bounds.center, eachCollider.bounds.size.magnitude / 2, 918016);
+                foreach (var eachOtherCollider in otherColliders)
+                {
+                    if (!eachOtherCollider.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+
+                    if (eachOtherCollider.transform.IsChildOf(gameObject.transform))
+                    {
+                        continue;
+                    }
+
+                    Vector3 direction;
+                    float distance;
+
+                    if (Physics.ComputePenetration(eachCollider, eachCollider.transform.position, eachCollider.transform.rotation, eachOtherCollider, eachOtherCollider.transform.position, eachOtherCollider.transform.rotation, out direction, out distance))
+                    {
+                        __result = true;
+                        return false;
+                    }
+                }
+            }
+
+            __result = false;
+            return false;
         }
     }
 
@@ -279,10 +310,9 @@ namespace BetterPlacing
                     BetterPlacing.PrepareGearItem(objectToPlace);
                     objectToPlace.layer = vp_Layer.IgnoreRaycast;
                 }
-                else if (BetterPlacing.IsPlacableFurniture(objectToPlace))
+                else if (BetterPlacing.IsPlaceableFurniture(objectToPlace))
                 {
-                    objectToPlace.layer = vp_Layer.NoCollidePlayer;
-                    vp_Layer.Set(objectToPlace, vp_Layer.NoCollidePlayer, true);
+                    vp_Layer.Set(objectToPlace, vp_Layer.IgnoreRaycast, true);
                 }
             }
         }
