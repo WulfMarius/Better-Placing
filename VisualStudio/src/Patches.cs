@@ -16,7 +16,7 @@ namespace BetterPlacing
                 return true;
             }
 
-            ModBreakDownSaveData saveData = Newtonsoft.Json.JsonConvert.DeserializeObject<ModBreakDownSaveData>(text);
+            ModBreakDownSaveData saveData = Utils.DeserializeObject<ModBreakDownSaveData>(text);
             if (saveData.m_HasBeenBrokenDown)
             {
                 return true;
@@ -46,7 +46,7 @@ namespace BetterPlacing
                 }
 
                 MethodInfo methodInfo = codes[i].operand as MethodInfo;
-                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Newtonsoft.Json.JsonConvert) || !methodInfo.IsGenericMethod)
+                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Utils) || !methodInfo.IsGenericMethod)
                 {
                     continue;
                 }
@@ -80,7 +80,7 @@ namespace BetterPlacing
                 }
 
                 MethodInfo methodInfo = codes[i].operand as MethodInfo;
-                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Newtonsoft.Json.JsonConvert) || !methodInfo.IsGenericMethod)
+                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Utils) || !methodInfo.IsGenericMethod)
                 {
                     continue;
                 }
@@ -131,7 +131,7 @@ namespace BetterPlacing
             saveData.m_HasBeenBrokenDown = !__instance.gameObject.activeSelf;
             saveData.m_Guid = Utils.GetGuidFromGameObject(__instance.gameObject);
 
-            __result = Newtonsoft.Json.JsonConvert.SerializeObject(saveData);
+            __result = Utils.SerializeObject(saveData);
             return false;
         }
     }
