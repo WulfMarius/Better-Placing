@@ -1,0 +1,10 @@
+﻿[
+	{
+		"name": "Better-Placing",
+		"version": "2.0.0",
+		"dependencies": [],
+		"assets": [
+			"https://github.com/WulfMarius/Better-Placing/releases/download/2.0.0-main/Better-Placing-V2.0.0.zip"
+		]
+	}
+]
