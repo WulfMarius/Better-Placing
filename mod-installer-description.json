@@ -1,0 +1,18 @@
+﻿{
+	"name": "Better-Placing",
+	"description": "More flexibility when placing items in the world. Also allows to move certain types of furniture.",
+	"url": "https://github.com/WulfMarius/Better-Placing",
+	"releases": [
+		{
+			"version": "2.0.0",
+			"url": "https://github.com/WulfMarius/Better-Placing/releases/tag/2.0.0-main",
+			"changes": "updated to work with TLD V1.27",
+			"dependencies": [],
+			"assets": [
+				{
+					"url": "https://github.com/WulfMarius/Better-Placing/releases/download/2.0.0-main/Better-Placing-V2.0.0.zip"
+				}
+			]
+		}
+	]
+}
