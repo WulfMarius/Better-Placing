@@ -35,6 +35,24 @@ namespace BetterPlacing
             Utils.m_PhysicalCollisionLayerMask |= 1 << vp_Layer.Gear;
         }
 
+        internal static void AddNpcToPhysicalCollisionMask()
+        {
+            Utils.m_PhysicalCollisionLayerMask |= 1 << vp_Layer.NPC;
+        }
+
+        internal static void ChangeLayer(GameObject gameObject, int from, int to)
+        {
+            if (gameObject.layer == from)
+            {
+                gameObject.layer = to;
+            }
+
+            foreach (Transform eachChild in gameObject.transform)
+            {
+                ChangeLayer(eachChild.gameObject, from, to);
+            }
+        }
+
         internal static void InitializeRotation(PlayerManager playerManager)
         {
             BetterPlacing.playerManager = playerManager;
@@ -102,17 +120,6 @@ namespace BetterPlacing
             return true;
         }
 
-        internal static void PrepareGearItem(GameObject gameObject)
-        {
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            FixBoxCollider(gameObject);
-            RemoveNoCollidePlayer(gameObject);
-        }
-
         internal static void PrepareGearItems()
         {
             GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
@@ -120,14 +127,17 @@ namespace BetterPlacing
             {
                 if (IsStackableGearItem(eachGearItem.gameObject))
                 {
-                    PrepareGearItem(eachGearItem.gameObject);
+                    FixBoxCollider(eachGearItem.gameObject);
                 }
             }
+
+            RemovePickupHelper(Resources.Load<GameObject>("GEAR_WoodMatches"));
+            RemovePickupHelper(Resources.Load<GameObject>("GEAR_PackMatches"));
         }
 
         internal static void PreparePlacableFurniture(GameObject gameObject)
         {
-            if (!gameObject.GetComponent<Renderer>().isPartOfStaticBatch)
+            if (!gameObject.GetComponentInChildren<Renderer>().isPartOfStaticBatch)
             {
                 return;
             }
@@ -139,9 +149,14 @@ namespace BetterPlacing
             }
 
             MeshFilter templateMeshFilter = prefab.GetComponentInChildren<MeshFilter>();
-            gameObject.GetComponent<MeshFilter>().mesh = templateMeshFilter.mesh;
 
-            BoxCollider[] templateBoxColliders = prefab.GetComponents<BoxCollider>();
+            MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
+            foreach (MeshFilter eachMeshFilter in meshFilters)
+            {
+                eachMeshFilter.mesh = templateMeshFilter.mesh;
+            }
+
+            BoxCollider[] templateBoxColliders = prefab.GetComponentsInChildren<BoxCollider>();
             foreach (BoxCollider eachTemplateBoxCollider in templateBoxColliders)
             {
                 BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
@@ -161,10 +176,20 @@ namespace BetterPlacing
             Utils.m_PhysicalCollisionLayerMask &= ~(1 << vp_Layer.Gear);
         }
 
+        internal static void RemoveNpcFromPhysiclaCollisionMask()
+        {
+            Utils.m_PhysicalCollisionLayerMask &= ~(1 << vp_Layer.NPC);
+        }
+
         internal static void RestoreFurnitureLayers(GameObject furniture)
         {
-            vp_Layer.Set(furniture, vp_Layer.InteractiveProp, true);
-            vp_Layer.Set(furniture, vp_Layer.Default, false);
+            vp_Layer.Set(furniture, vp_Layer.Default, true);
+
+            BreakDown breakDown = furniture.GetComponentInChildren<BreakDown>();
+            if (breakDown != null)
+            {
+                vp_Layer.Set(breakDown.gameObject, vp_Layer.InteractiveProp);
+            }
         }
 
         internal static void RestoreLastValidTransform(GameObject gameObject)
@@ -244,6 +269,11 @@ namespace BetterPlacing
 
         private static void FixBoxCollider(GameObject gameObject)
         {
+            if (gameObject == null)
+            {
+                return;
+            }
+
             BoxCollider boxCollider = gameObject.GetComponentInChildren<BoxCollider>();
             if (boxCollider == null)
             {
@@ -255,6 +285,11 @@ namespace BetterPlacing
             MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
             foreach (MeshFilter eachMeshFilter in meshFilters)
             {
+                if (eachMeshFilter.transform.parent && "OpenedMesh" == eachMeshFilter.transform.parent.name)
+                {
+                    continue;
+                }
+
                 GameObject transformObject = new GameObject();
                 transformObject.transform.localRotation = eachMeshFilter.transform.localRotation;
                 transformObject.transform.localScale = eachMeshFilter.transform.localScale;
@@ -314,15 +349,20 @@ namespace BetterPlacing
             return result;
         }
 
-        private static void RemoveNoCollidePlayer(GameObject gameObject)
+        private static void RemovePickupHelper(GameObject gameObject)
         {
-            foreach (Transform eachTransform in gameObject.transform)
+            if (gameObject == null)
             {
-                if (eachTransform.gameObject.layer == vp_Layer.NoCollidePlayer)
-                {
-                    Object.Destroy(eachTransform.gameObject);
-                }
+                return;
             }
+
+            Transform pickupHelper = gameObject.transform.Find("PickupHelper");
+            if (pickupHelper == null)
+            {
+                return;
+            }
+
+            Object.Destroy(pickupHelper.GetComponent<Collider>());
         }
 
         private static void SetRotation(Quaternion rotation)

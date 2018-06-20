@@ -1,26 +1,23 @@
 fileFormatVersion: 2
-guid: 3d79660897451514cb5dec0863f60176
-timeCreated: 1509953308
+guid: d2c78cd678e0ce9449ebc171f291defc
+timeCreated: 1525080170
 licenseType: Free
 ModelImporter:
   serializedVersion: 22
   fileIDToRecycleName:
     100000: //RootNode
+    100002: Obj_BenchD_0
     400000: //RootNode
-    2300000: //RootNode
-    3300000: //RootNode
-    4300000: OBJ_MetalChairB
+    400002: Obj_BenchD_0
+    2300000: Obj_BenchD_0
+    3300000: Obj_BenchD_0
+    4300000: Obj_BenchD_0
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material
-    second: {fileID: 2100000, guid: 1b53256197ad2d9419fde4712395d4bd, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material_001
-    second: {fileID: 2100000, guid: 2d1d71aa26c796040bfac3eb50a725c7, type: 2}
+      name: Obj_BenchD_0Mat
+    second: {fileID: 2100000, guid: da570ecdf8da23648a1a922abadf89d4, type: 2}
   materials:
     importMaterials: 1
     materialName: 0
@@ -72,7 +69,7 @@ ModelImporter:
     normalSmoothAngle: 60
     normalImportMode: 0
     tangentImportMode: 3
-    normalCalculationMode: 0
+    normalCalculationMode: 4
   importAnimation: 0
   copyAvatar: 0
   humanDescription:
