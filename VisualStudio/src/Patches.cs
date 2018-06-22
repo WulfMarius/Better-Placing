@@ -22,13 +22,15 @@ namespace BetterPlacing
                 return true;
             }
 
+            __instance.gameObject.SetActive(true);
             BetterPlacing.PreparePlacableFurniture(__instance.gameObject);
 
-            __instance.transform.parent.position = saveData.m_Position;
-            __instance.gameObject.SetActive(true);
+            GameObject root = BetterPlacing.getFurnitureRoot(__instance.gameObject);
+
+            root.transform.position = saveData.m_Position;
             if (saveData.m_Rotation.x != 0 || saveData.m_Rotation.y != 0 || saveData.m_Rotation.z != 0)
             {
-                __instance.transform.parent.rotation = Quaternion.Euler(saveData.m_Rotation);
+                root.transform.rotation = Quaternion.Euler(saveData.m_Rotation);
             }
 
             return false;
@@ -235,13 +237,8 @@ namespace BetterPlacing
             {
                 BetterPlacing.PreparePlacableFurniture(gameObject);
 
-                LODGroup lodGroup = gameObject.GetComponentInParent<LODGroup>();
-                if (lodGroup != null)
-                {
-                    gameObject = lodGroup.gameObject;
-                }
-
-                __instance.StartPlaceMesh(gameObject, 5f, false);
+                GameObject root = BetterPlacing.getFurnitureRoot(gameObject);
+                __instance.StartPlaceMesh(root, 5f, false);
 
                 return false;
             }

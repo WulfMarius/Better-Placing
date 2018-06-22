@@ -135,6 +135,16 @@ namespace BetterPlacing
             RemovePickupHelper(Resources.Load<GameObject>("GEAR_PackMatches"));
         }
 
+        internal static GameObject getFurnitureRoot(GameObject gameObject)
+        {
+            if (gameObject.GetComponent<LODGroup>() != null)
+            {
+                return gameObject;
+            }
+
+            return getFurnitureRoot(gameObject.transform.parent.gameObject);
+        }
+
         internal static void PreparePlacableFurniture(GameObject gameObject)
         {
             if (!gameObject.GetComponentInChildren<Renderer>().isPartOfStaticBatch)
