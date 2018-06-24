@@ -163,6 +163,10 @@ namespace BetterPlacing
             MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
             foreach (MeshFilter eachMeshFilter in meshFilters)
             {
+                if (!eachMeshFilter.name.StartsWith(templateMeshFilter.name)) {
+                    continue;
+                }
+
                 eachMeshFilter.mesh = templateMeshFilter.mesh;
             }
 
