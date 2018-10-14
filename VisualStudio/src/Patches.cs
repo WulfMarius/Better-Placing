@@ -138,12 +138,72 @@ namespace BetterPlacing
         }
     }
 
-    [HarmonyPatch(typeof(GearManager), "Reset")]
-    internal class GearManager_Reset
+    [HarmonyPatch(typeof(BreakDown), "StickToGround")]
+    internal class BreakDown_StickToGround
     {
-        public static void Prefix()
+        public static void Postfix()
         {
-            BetterPlacing.PrepareGearItems();
+            BetterPlacing.RemoveGearItemsFromPhysicalCollisionMask();
+        }
+
+        public static void Prefix(BreakDown __instance, GameObject go)
+        {
+            if (BetterPlacing.IsStackableGearItem(go))
+            {
+                BetterPlacing.AddGearItemsToPhysicalCollisionMask();
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Campfire), "Awake")]
+    internal class Campfire_Awake
+    {
+        internal static void Postfix(Campfire __instance)
+        {
+            BetterPlacing.ChangeLayer(__instance.gameObject, vp_Layer.Gear, vp_Layer.NPC);
+        }
+    }
+
+    [HarmonyPatch(typeof(GearManager), "Add")]
+    internal class GearManager_Add
+    {
+        public static void Prefix(GearItem gi)
+        {
+            BetterPlacing.FixBoxCollider(gi.gameObject);
+            BetterPlacing.RemovePickupHelper(gi.gameObject);
+        }
+    }
+
+    [HarmonyPatch(typeof(GearPlacePoint), "AddDefaultCapsuleCollider")]
+    internal class GearPlacePoint_AddDefaultCapsuleCollider
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> codeInstructions = new List<CodeInstruction>(instructions);
+
+            for (int i = 0; i < codeInstructions.Count; i++)
+            {
+                CodeInstruction codeInstruction = codeInstructions[i];
+
+                if (codeInstruction.opcode != OpCodes.Call && codeInstruction.opcode != OpCodes.Callvirt)
+                {
+                    continue;
+                }
+
+                MethodInfo methodInfo = codeInstruction.operand as MethodInfo;
+                if (methodInfo == null)
+                {
+                    continue;
+                }
+
+                if (methodInfo.Name == "set_layer" && methodInfo.DeclaringType == typeof(GameObject) && methodInfo.GetParameters().Length == 1)
+                {
+                    codeInstructions[i - 1].operand = vp_Layer.NPC;
+                    break;
+                }
+            }
+
+            return instructions;
         }
     }
 
@@ -250,6 +310,11 @@ namespace BetterPlacing
     [HarmonyPatch(typeof(PlayerManager), "ObjectToPlaceOverlapsWithObjectsThatBlockPlacement")]
     internal class PlayerManager_ObjectToPlaceOverlapsWithObjectsThatBlockPlacement
     {
+        public static void Postfix()
+        {
+            BetterPlacing.RemoveNpcFromPhysiclaCollisionMask();
+        }
+
         public static bool Prefix(PlayerManager __instance, ref bool __result)
         {
             BetterPlacing.AddNpcToPhysicalCollisionMask();
@@ -289,11 +354,6 @@ namespace BetterPlacing
 
             __result = false;
             return false;
-        }
-
-        public static void Postfix()
-        {
-            BetterPlacing.RemoveNpcFromPhysiclaCollisionMask();
         }
     }
 
@@ -352,48 +412,6 @@ namespace BetterPlacing
             }
 
             return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(Campfire), "Awake")]
-    internal class Campfire_Awake
-    {
-        internal static void Postfix(Campfire __instance)
-        {
-            BetterPlacing.ChangeLayer(__instance.gameObject, vp_Layer.Gear, vp_Layer.NPC);
-        }
-    }
-
-    [HarmonyPatch(typeof(GearPlacePoint), "AddDefaultCapsuleCollider")]
-    internal class GearPlacePoint_AddDefaultCapsuleCollider
-    {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> codeInstructions = new List<CodeInstruction>(instructions);
-
-            for (int i = 0; i < codeInstructions.Count; i++)
-            {
-                CodeInstruction codeInstruction = codeInstructions[i];
-
-                if (codeInstruction.opcode != OpCodes.Call && codeInstruction.opcode != OpCodes.Callvirt)
-                {
-                    continue;
-                }
-
-                MethodInfo methodInfo = codeInstruction.operand as MethodInfo;
-                if (methodInfo == null)
-                {
-                    continue;
-                }
-
-                if (methodInfo.Name == "set_layer" && methodInfo.DeclaringType == typeof(GameObject) && methodInfo.GetParameters().Length == 1)
-                {
-                    codeInstructions[i - 1].operand = vp_Layer.NPC;
-                    break;
-                }
-            }
-
-            return instructions;
         }
     }
 

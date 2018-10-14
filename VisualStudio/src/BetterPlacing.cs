@@ -19,7 +19,7 @@ namespace BetterPlacing
 
         public static void OnLoad()
         {
-            Debug.Log("[Better-Placing]: Version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            Debug.Log("[Better-Placing] Version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
 
             AddTranslations();
             PlaceableFurniture.Initialize();
@@ -120,21 +120,6 @@ namespace BetterPlacing
             return true;
         }
 
-        internal static void PrepareGearItems()
-        {
-            GearItem[] gearItems = Resources.FindObjectsOfTypeAll<GearItem>();
-            foreach (GearItem eachGearItem in gearItems)
-            {
-                if (IsStackableGearItem(eachGearItem.gameObject))
-                {
-                    FixBoxCollider(eachGearItem.gameObject);
-                }
-            }
-
-            RemovePickupHelper(Resources.Load<GameObject>("GEAR_WoodMatches"));
-            RemovePickupHelper(Resources.Load<GameObject>("GEAR_PackMatches"));
-        }
-
         internal static GameObject getFurnitureRoot(GameObject gameObject)
         {
             if (gameObject.GetComponent<LODGroup>() != null)
@@ -163,7 +148,8 @@ namespace BetterPlacing
             MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
             foreach (MeshFilter eachMeshFilter in meshFilters)
             {
-                if (!eachMeshFilter.name.StartsWith(templateMeshFilter.name)) {
+                if (!eachMeshFilter.name.StartsWith(templateMeshFilter.name))
+                {
                     continue;
                 }
 
@@ -281,7 +267,7 @@ namespace BetterPlacing
             Localization.dictionary.Add("GAMEPLAY_BlockedByItemAbove", translations);
         }
 
-        private static void FixBoxCollider(GameObject gameObject)
+        internal static void FixBoxCollider(GameObject gameObject)
         {
             if (gameObject == null)
             {
@@ -363,7 +349,7 @@ namespace BetterPlacing
             return result;
         }
 
-        private static void RemovePickupHelper(GameObject gameObject)
+        internal static void RemovePickupHelper(GameObject gameObject)
         {
             if (gameObject == null)
             {
@@ -376,7 +362,7 @@ namespace BetterPlacing
                 return;
             }
 
-            Object.Destroy(pickupHelper.GetComponent<Collider>());
+            pickupHelper.gameObject.SetActive(false);
         }
 
         private static void SetRotation(Quaternion rotation)
