@@ -207,6 +207,32 @@ namespace BetterPlacing
         }
     }
 
+    [HarmonyPatch(typeof(PlayerManager), "CleanUpPlaceMesh")]
+    internal class PlayerManager_CleanUpPlaceMesh
+    {
+        private static void Prefix(PlayerManager __instance)
+        {
+            var gameObject = __instance.GetObjectToPlace();
+            if (BetterPlacing.IsStackableGearItem(gameObject))
+            {
+                BetterPlacing.RemoveGearItemsFromPhysicalCollisionMask();
+            }
+            else if (BetterPlacing.IsPlaceableFurniture(gameObject))
+            {
+                BetterPlacing.AddFurnitureToPhysicalCollisionMask();
+                BetterPlacing.RestoreFurnitureLayers(gameObject);
+            }
+
+            CookingPotItem[] items = Object.FindObjectsOfType<CookingPotItem>();
+            foreach (var eachItem in items)
+            {
+                vp_Layer.Set(eachItem.gameObject, vp_Layer.Gear, true);
+            }
+
+            InterfaceManager.m_Panel_ActionsRadial.DisableRadial(false);
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerManager), "DoPositionCheck")]
     internal class PlayerManager_DoPositionCheck
     {
@@ -222,6 +248,32 @@ namespace BetterPlacing
             {
                 BetterPlacing.RemoveFurnitureFromPhysicalCollisionMask();
             }
+        }
+
+        private static float GetRotation()
+        {
+            if (Utils.IsGamepadActive())
+            {
+                if (InputManager.GetRadialButtonHeldDown())
+                {
+                    return -1;
+                }
+
+                if (InputManager.GetSprintDown())
+                {
+                    return 1;
+                }
+
+                return 0;
+            }
+
+            float result = Input.mouseScrollDelta.y;
+            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+            {
+                result *= 5;
+            }
+
+            return result;
         }
 
         private static void Postfix(PlayerManager __instance, ref MeshLocationCategory __result)
@@ -249,39 +301,10 @@ namespace BetterPlacing
                 BetterPlacing.SnapToRotationBelow(gameObject);
             }
 
-            if (Input.mouseScrollDelta.y != 0)
+            float yAngle = GetRotation();
+            if (yAngle != 0)
             {
-                float yAngle = Input.mouseScrollDelta.y;
-                if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
-                {
-                    yAngle *= 5;
-                }
-
                 BetterPlacing.Rotate(gameObject, yAngle);
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(PlayerManager), "CleanUpPlaceMesh")]
-    internal class PlayerManager_GetLayerMaskForPlaceMeshRaycast
-    {
-        private static void Prefix(PlayerManager __instance)
-        {
-            var gameObject = __instance.GetObjectToPlace();
-            if (BetterPlacing.IsStackableGearItem(gameObject))
-            {
-                BetterPlacing.RemoveGearItemsFromPhysicalCollisionMask();
-            }
-            else if (BetterPlacing.IsPlaceableFurniture(gameObject))
-            {
-                BetterPlacing.AddFurnitureToPhysicalCollisionMask();
-                BetterPlacing.RestoreFurnitureLayers(gameObject);
-            }
-
-            CookingPotItem[] items = Object.FindObjectsOfType<CookingPotItem>();
-            foreach (var eachItem in items)
-            {
-                vp_Layer.Set(eachItem.gameObject, vp_Layer.Gear, true);
             }
         }
     }
@@ -411,6 +434,7 @@ namespace BetterPlacing
                 }
             }
 
+            InterfaceManager.m_Panel_ActionsRadial.DisableRadial(true);
             return true;
         }
     }
