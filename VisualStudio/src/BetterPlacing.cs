@@ -19,7 +19,7 @@ namespace BetterPlacing
 
         public static void OnLoad()
         {
-            Debug.Log("[Better-Placing] Version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            Log("Version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
 
             AddTranslations();
             PlaceableFurniture.Initialize();
@@ -51,6 +51,64 @@ namespace BetterPlacing
             {
                 ChangeLayer(eachChild.gameObject, from, to);
             }
+        }
+
+        internal static void FixBoxCollider(GameObject gameObject)
+        {
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            Renderer renderer = Utils.GetLargestBoundsRenderer(gameObject.gameObject);
+            if (renderer == null)
+            {
+                return;
+            }
+
+            BoxCollider boxCollider = gameObject.GetComponentInChildren<BoxCollider>();
+            if (boxCollider == null)
+            {
+                Log("Adding BoxCollider to " + gameObject.name);
+                Object.Destroy(gameObject.GetComponent<MeshCollider>());
+
+                boxCollider = gameObject.gameObject.AddComponent<BoxCollider>();
+                boxCollider.size = renderer.bounds.extents * 2;
+            }
+
+            float meshHeight = -1;
+
+            MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
+            foreach (MeshFilter eachMeshFilter in meshFilters)
+            {
+                if (eachMeshFilter.transform.parent && "OpenedMesh" == eachMeshFilter.transform.parent.name)
+                {
+                    continue;
+                }
+
+                GameObject transformObject = new GameObject();
+                transformObject.transform.localRotation = eachMeshFilter.transform.localRotation;
+                transformObject.transform.localScale = eachMeshFilter.transform.localScale;
+                meshHeight = Mathf.Max(meshHeight, Mathf.Abs(transformObject.transform.TransformVector(eachMeshFilter.mesh.bounds.size).y));
+            }
+
+            if (meshHeight <= 0)
+            {
+                return;
+            }
+
+            boxCollider.center = new Vector3(boxCollider.center.x, meshHeight / 2f + COLLIDER_OFFSET, boxCollider.center.z);
+            boxCollider.size = new Vector3(boxCollider.size.x, meshHeight - COLLIDER_OFFSET, boxCollider.size.z);
+        }
+
+        internal static GameObject getFurnitureRoot(GameObject gameObject)
+        {
+            if (gameObject.GetComponent<LODGroup>() != null)
+            {
+                return gameObject;
+            }
+
+            return getFurnitureRoot(gameObject.transform.parent.gameObject);
         }
 
         internal static void InitializeRotation(PlayerManager playerManager)
@@ -120,14 +178,9 @@ namespace BetterPlacing
             return true;
         }
 
-        internal static GameObject getFurnitureRoot(GameObject gameObject)
+        internal static void Log(string message)
         {
-            if (gameObject.GetComponent<LODGroup>() != null)
-            {
-                return gameObject;
-            }
-
-            return getFurnitureRoot(gameObject.transform.parent.gameObject);
+            Debug.Log("Better-Placing] " + message);
         }
 
         internal static void PreparePlacableFurniture(GameObject gameObject)
@@ -179,6 +232,22 @@ namespace BetterPlacing
         internal static void RemoveNpcFromPhysiclaCollisionMask()
         {
             Utils.m_PhysicalCollisionLayerMask &= ~(1 << vp_Layer.NPC);
+        }
+
+        internal static void RemovePickupHelper(GameObject gameObject)
+        {
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            Transform pickupHelper = gameObject.transform.Find("PickupHelper");
+            if (pickupHelper == null)
+            {
+                return;
+            }
+
+            pickupHelper.gameObject.SetActive(false);
         }
 
         internal static void RestoreFurnitureLayers(GameObject furniture)
@@ -267,44 +336,6 @@ namespace BetterPlacing
             Localization.dictionary.Add("GAMEPLAY_BlockedByItemAbove", translations);
         }
 
-        internal static void FixBoxCollider(GameObject gameObject)
-        {
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            BoxCollider boxCollider = gameObject.GetComponentInChildren<BoxCollider>();
-            if (boxCollider == null)
-            {
-                return;
-            }
-
-            float meshHeight = -1;
-
-            MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
-            foreach (MeshFilter eachMeshFilter in meshFilters)
-            {
-                if (eachMeshFilter.transform.parent && "OpenedMesh" == eachMeshFilter.transform.parent.name)
-                {
-                    continue;
-                }
-
-                GameObject transformObject = new GameObject();
-                transformObject.transform.localRotation = eachMeshFilter.transform.localRotation;
-                transformObject.transform.localScale = eachMeshFilter.transform.localScale;
-                meshHeight = Mathf.Max(meshHeight, Mathf.Abs(transformObject.transform.TransformVector(eachMeshFilter.mesh.bounds.size).y));
-            }
-
-            if (meshHeight <= 0)
-            {
-                return;
-            }
-
-            boxCollider.center = new Vector3(boxCollider.center.x, meshHeight / 2f + COLLIDER_OFFSET, boxCollider.center.z);
-            boxCollider.size = new Vector3(boxCollider.size.x, meshHeight - COLLIDER_OFFSET, boxCollider.size.z);
-        }
-
         private static GameObject GetGearItemBelow(GameObject gameObject, float maxDistance)
         {
             RaycastHit[] hits = Physics.RaycastAll(gameObject.transform.position + gameObject.transform.up * CONTACT_DISTANCE, -gameObject.transform.up, maxDistance, 1 << vp_Layer.Gear);
@@ -347,22 +378,6 @@ namespace BetterPlacing
             }
 
             return result;
-        }
-
-        internal static void RemovePickupHelper(GameObject gameObject)
-        {
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            Transform pickupHelper = gameObject.transform.Find("PickupHelper");
-            if (pickupHelper == null)
-            {
-                return;
-            }
-
-            pickupHelper.gameObject.SetActive(false);
         }
 
         private static void SetRotation(Quaternion rotation)
