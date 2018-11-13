@@ -338,7 +338,7 @@ namespace BetterPlacing
             BetterPlacing.RemoveNpcFromPhysiclaCollisionMask();
         }
 
-        public static bool Prefix(PlayerManager __instance, ref bool __result)
+        public static bool Prefix(PlayerManager __instance, ref Collider __result)
         {
             BetterPlacing.AddNpcToPhysicalCollisionMask();
 
@@ -369,13 +369,13 @@ namespace BetterPlacing
 
                     if (Physics.ComputePenetration(eachCollider, eachCollider.transform.position, eachCollider.transform.rotation, eachOtherCollider, eachOtherCollider.transform.position, eachOtherCollider.transform.rotation, out direction, out distance))
                     {
-                        __result = true;
+                        __result = eachOtherCollider;
                         return false;
                     }
                 }
             }
 
-            __result = false;
+            __result = null;
             return false;
         }
     }

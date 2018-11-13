@@ -180,7 +180,7 @@ namespace BetterPlacing
 
         internal static void Log(string message)
         {
-            Debug.Log("Better-Placing] " + message);
+            Debug.Log("[Better-Placing] " + message);
         }
 
         internal static void PreparePlacableFurniture(GameObject gameObject)
