@@ -254,12 +254,12 @@ namespace BetterPlacing
         {
             if (Utils.IsGamepadActive())
             {
-                if (InputManager.GetRadialButtonHeldDown())
+                if (InputManager.GetRadialButtonHeldDown(GameManager.Instance()))
                 {
                     return -1;
                 }
 
-                if (InputManager.GetSprintDown())
+                if (InputManager.GetSprintDown(GameManager.Instance()))
                 {
                     return 1;
                 }
@@ -321,7 +321,7 @@ namespace BetterPlacing
                 BetterPlacing.PreparePlacableFurniture(gameObject);
 
                 GameObject root = BetterPlacing.getFurnitureRoot(gameObject);
-                __instance.StartPlaceMesh(root, 5f, false);
+                __instance.StartPlaceMesh(root, 5f, PlaceMeshFlags.None);
 
                 return false;
             }
