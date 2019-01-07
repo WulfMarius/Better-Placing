@@ -11,10 +11,8 @@ namespace BetterPlacing
         private const float CONTACT_DISTANCE = 0.01f;
         private const float RAYCAST_DISTANCE = 0.1f;
 
-        private static FieldInfo fieldInfo;
         private static Vector3 lastValidPosition;
         private static Quaternion lastValidRotation;
-        private static PlayerManager playerManager;
         private static Quaternion rotation;
 
         public static void OnLoad()
@@ -113,10 +111,7 @@ namespace BetterPlacing
 
         internal static void InitializeRotation(PlayerManager playerManager)
         {
-            BetterPlacing.playerManager = playerManager;
-            fieldInfo = AccessTools.Field(playerManager.GetType(), "m_RotationInCameraSpace");
-
-            rotation = (Quaternion)fieldInfo.GetValue(playerManager);
+            rotation = Traverse.Create(GameManager.GetPlayerManagerComponent()).Field("m_RotationInCameraSpace").GetValue<Quaternion>();
         }
 
         internal static bool IsBlockedFromAbove(GameObject gameObject)
@@ -383,7 +378,7 @@ namespace BetterPlacing
         private static void SetRotation(Quaternion rotation)
         {
             BetterPlacing.rotation = rotation;
-            fieldInfo.SetValue(playerManager, rotation);
+            Traverse.Create(GameManager.GetPlayerManagerComponent()).Field("m_RotationInCameraSpace").SetValue(rotation);
         }
     }
 }
