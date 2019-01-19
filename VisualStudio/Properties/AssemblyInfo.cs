@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Better-Placing")]
-[assembly: AssemblyCopyright("© 2018 WulfMarius")]
+[assembly: AssemblyCopyright("© 2019 WulfMarius")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
