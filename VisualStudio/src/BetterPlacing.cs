@@ -58,10 +58,19 @@ namespace BetterPlacing
                 return;
             }
 
-            Renderer renderer = Utils.GetLargestBoundsRenderer(gameObject.gameObject);
+            Renderer renderer = Utils.GetLargestBoundsRenderer(gameObject);
             if (renderer == null)
             {
                 return;
+            }
+
+            BoxCollider[] boxColliders = gameObject.GetComponentsInChildren<BoxCollider>();
+            foreach (BoxCollider eachBoxCollider in boxColliders) {
+                if (eachBoxCollider.isTrigger)
+                {
+                    Log("Removing " + eachBoxCollider + " because it is a trigger.");
+                    Object.Destroy(eachBoxCollider);
+                }
             }
 
             BoxCollider boxCollider = gameObject.GetComponentInChildren<BoxCollider>();

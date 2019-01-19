@@ -35,70 +35,6 @@ namespace BetterPlacing
 
             return false;
         }
-
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var codes = new List<CodeInstruction>(instructions);
-
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (codes[i].opcode != OpCodes.Call)
-                {
-                    continue;
-                }
-
-                MethodInfo methodInfo = codes[i].operand as MethodInfo;
-                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Utils) || !methodInfo.IsGenericMethod)
-                {
-                    continue;
-                }
-
-                System.Type[] genericArguments = methodInfo.GetGenericArguments();
-                if (genericArguments.Length != 1 || genericArguments[0] != typeof(BreakDownSaveData))
-                {
-                    continue;
-                }
-
-                methodInfo = methodInfo.GetBaseDefinition().MakeGenericMethod(typeof(ModBreakDownSaveData));
-                codes[i].operand = methodInfo;
-            }
-
-            return codes;
-        }
-    }
-
-    [HarmonyPatch(typeof(BreakDown), "DeserializeAll")]
-    internal class BreakDown_DeserializeAll
-    {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var codes = new List<CodeInstruction>(instructions);
-
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (codes[i].opcode != OpCodes.Call)
-                {
-                    continue;
-                }
-
-                MethodInfo methodInfo = codes[i].operand as MethodInfo;
-                if (methodInfo == null || methodInfo.Name != "DeserializeObject" || methodInfo.DeclaringType != typeof(Utils) || !methodInfo.IsGenericMethod)
-                {
-                    continue;
-                }
-
-                System.Type[] genericArguments = methodInfo.GetGenericArguments();
-                if (genericArguments.Length != 1 || genericArguments[0] != typeof(BreakDownSaveData))
-                {
-                    continue;
-                }
-
-                methodInfo = methodInfo.GetBaseDefinition().MakeGenericMethod(typeof(ModBreakDownSaveData));
-                codes[i].operand = methodInfo;
-            }
-
-            return codes;
-        }
     }
 
     [HarmonyPatch(typeof(BreakDown), "ProcessInteraction")]
@@ -198,7 +134,7 @@ namespace BetterPlacing
 
                 if (methodInfo.Name == "set_layer" && methodInfo.DeclaringType == typeof(GameObject) && methodInfo.GetParameters().Length == 1)
                 {
-                    codeInstructions[i - 1].operand = vp_Layer.NPC;
+                    codeInstructions[i - 1].operand = (sbyte)vp_Layer.NPC;
                     break;
                 }
             }
